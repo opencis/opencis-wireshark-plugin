@@ -24,7 +24,7 @@ You can then start listening the OpenCXL traffic. If Wireshark is not listening,
 
 ### Filter
 
-All filters are under the root named `opencxl`. Depending on your need, you can utilize the filter in very flexible ways. Some examples:
+All filters are defined under `opencxl`. Depending on your need, you can utilize the filter in very flexible ways. Some examples:
  - `opencxl.mem.m2s.birsp || opencxl.mem.s2m.bisnp` shows all CXL.mem back invalidation packets.
  - `opencxl.mem.s2m.bisnp.mem_opcode == BISnpData` selects all BISnpData packets.
 The complete filter definitions can be found in the dissector source code.
