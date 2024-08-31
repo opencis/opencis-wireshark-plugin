@@ -52,11 +52,10 @@ if args and #args > 0 then
             else
                 error("invalid commandline argument value")
             end
-        else
-            error("invalid commandline argument syntax")
+            default_settings[name] = value
         end
 
-        default_settings[name] = value
+        
     end
 end
 
