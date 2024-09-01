@@ -109,6 +109,13 @@ local opencxl_io_header = Proto("opencxl.io","CXL.io Header")
 local opencxl_mreq_header = Proto("opencxl.io.mreq","CXL.io Memory Request Header")
 local opencxl_cpl_packet = Proto("opencxl.io.cpl","CXL.io Completion Packet")
 local opencxl_cfg_packet = Proto("opencxl.io.cfg","CXL.io Config Packet")
+local opencxl_cache_header = Proto("opencxl.cache","CXL.cache Header")
+local opencxl_d2h_req_header = Proto("opencxl.mem.d2h.req","CXL.cache D2H_REQ Header")
+local opencxl_d2h_rsp_header = Proto("opencxl.mem.d2h.rsp","CXL.cache D2H_RSP Header")
+local opencxl_d2h_data_header = Proto("opencxl.mem.d2h.data","CXL.cache D2H_DATA Header")
+local opencxl_h2d_req_header = Proto("opencxl.mem.h2d.req","CXL.cache H2D_REQ Header")
+local opencxl_h2d_rsp_header = Proto("opencxl.mem.h2d.rsp","CXL.cache H2D_RSP Header")
+local opencxl_h2d_data_header = Proto("opencxl.mem.h2d.data","CXL.cache H2D_DATA Header")
 local opencxl_mem_header = Proto("opencxl.mem","CXL.mem Header")
 local opencxl_m2s_req_header = Proto("opencxl.mem.m2s.req","CXL.mem M2S_REQ Header")
 local opencxl_m2s_rwd_header = Proto("opencxl.mem.m2s.rwd","CXL.mem M2S_RWD Header")
@@ -209,6 +216,137 @@ local io_cfg_header_r = ProtoField.new   ("r", "opencxl.io.cfg.r", ftypes.UINT8,
 local io_cfg_header_reg_num = ProtoField.new   ("Reg Num", "opencxl.io.cfg.reg_num", ftypes.UINT8, nil, base.HEX, 0xFC, "Reg Num")
 local io_cfg_header_data = ProtoField.new   ("Data", "opencxl.io.cfg.data", ftypes.UINT32, nil, base.HEX, nil, "Value")
 
+-- cache header
+local cache_header_channel_type_readable = {
+    [1] = "D2H_REQ",
+    [2] = "D2H_RSP",
+    [3] = "D2H_DATA",
+    [4] = "H2D_REQ",
+    [5] = "H2D_RSP",
+    [6] = "H2D_DATA",
+}
+
+
+-- cache_d2h_req header
+local cache_header_d2h_req_opcode_readable = {
+    [tonumber("00001", 2)] = "RdCurr",
+    [tonumber("00010", 2)] = "RdOwn",
+    [tonumber("00011", 2)] = "RdShared",
+    [tonumber("00100", 2)] = "RdAny",
+    [tonumber("00101", 2)] = "RdOwnNoData",
+    [tonumber("00110", 2)] = "ItoMWr",
+    [tonumber("00111", 2)] = "WrCur",
+    [tonumber("01000", 2)] = "CLFlush",
+    [tonumber("01001", 2)] = "CleanEvict",
+    [tonumber("01010", 2)] = "DirtyEvict",
+    [tonumber("01011", 2)] = "CleanEvictNoData",
+    [tonumber("01100", 2)] = "WOWrInv",
+    [tonumber("01101", 2)] = "WOWrInvF",
+    [tonumber("01110", 2)] = "WrInv",
+    [tonumber("10000", 2)] = "CacheFlushed",
+}
+
+local cache_header_req_id = ProtoField.new   ("Port Index", "opencxl.cache.port_index", ftypes.UINT8, nil, base.HEX, nil, "Port Index")
+local cache_header_channel_t = ProtoField.new   ("Channel Type", "opencxl.cache.channel_t", ftypes.UINT8, cache_header_channel_type_readable, base.HEX, nil, "Channel Type")
+
+local cache_header_d2h_req_nt_readable = {
+    [0] = "Host implementation-specific default behavior",
+    [1] = "Requested line should be moved to LRU position",
+}
+
+
+local cache_d2h_req = {}
+cache_d2h_req.header_valid = ProtoField.new   ("Valid", "opencxl.cache.d2h.req.valid", ftypes.UINT8, nil, base.HEX, 0x1, "Packet Valid?")
+cache_d2h_req.header_cache_opcode = ProtoField.new   ("Cache Opcode", "opencxl.cache.d2h.req.cache_opcode", ftypes.UINT8, cache_header_d2h_req_opcode_readable, base.HEX, 0x3E, "Opcode")
+cache_d2h_req.header_cqid = ProtoField.new   ("CQID", "opencxl.cache.d2h.req.cqid", ftypes.UINT32, nil, base.HEX, 0x3FFC0, "Command Queue ID")
+cache_d2h_req.header_nt = ProtoField.new   ("NT", "opencxl.cache.d2h.req.nt", ftypes.UINT8, cache_header_d2h_req_nt_readable, base.HEX, 0x4, "Non-temporal bit")
+cache_d2h_req.header_cache_id = ProtoField.new   ("CacheID", "opencxl.cache.d2h.req.cache_id", ftypes.UINT8, nil, base.HEX, 0x78, "Cache ID")
+cache_d2h_req.header_addr = ProtoField.new   ("Physical Address >> 6", "opencxl.cache.d2h.req.addr", ftypes.UINT64, nil, base.HEX, UInt64(0xFFFFFF80, 0x001FFFFF), "Physical Address >> 6")
+cache_d2h_req.header_rsvd = ProtoField.new   ("Reserved", "opencxl.cache.d2h.req.rsvd", ftypes.UINT8, nil, base.HEX, 0xFE, "Reserved")
+
+-- cache_d2h_rsp header
+
+local cache_header_d2h_rsp_opcode_readable = {
+    [tonumber("00100", 2)] = "RspIHitI",
+    [tonumber("00110", 2)] = "RspVHitV",
+    [tonumber("00101", 2)] = "RspIHitSE",
+    [tonumber("00001", 2)] = "RspSHitSE",
+    [tonumber("00111", 2)] = "RspSFwdM",
+    [tonumber("01111", 2)] = "RspIFwdM",
+    [tonumber("10110", 2)] = "RspVFwdV",
+}
+
+local cache_d2h_rsp = {}
+cache_d2h_rsp.header_valid = ProtoField.new   ("Valid", "opencxl.cache.d2h.rsp.valid", ftypes.UINT32, nil, base.HEX, 0x1, "Packet Valid?")
+cache_d2h_rsp.header_cache_opcode = ProtoField.new   ("Cache Opcode", "opencxl.cache.d2h.rsp.cache_opcode", ftypes.UINT32, cache_header_d2h_rsp_opcode_readable, base.HEX, 0x3E, "Opcode")
+cache_d2h_rsp.header_cqid = ProtoField.new   ("UQID", "opencxl.cache.d2h.rsp.uqid", ftypes.UINT32, nil, base.HEX, 0x3FFC0, "Unique Queue ID")
+cache_d2h_rsp.header_rsvd = ProtoField.new   ("Reserved", "opencxl.cache.d2h.rsp.rsvd", ftypes.UINT32, nil, base.HEX, 0x00FC0000, "Reserved")
+
+-- cache_d2h_data header
+
+local cache_d2h_data = {}
+cache_d2h_data.header_valid = ProtoField.new   ("Valid", "opencxl.cache.d2h.data.valid", ftypes.UINT32, nil, base.HEX, 0x1, "Packet Valid?")
+cache_d2h_data.header_uqid = ProtoField.new   ("UQID", "opencxl.cache.d2h.data.uqid", ftypes.UINT32, nil, base.HEX, 0x1FFE, "Unique Queue ID")
+cache_d2h_data.header_bogus = ProtoField.new   ("Bogus", "opencxl.cache.d2h.data.bogus", ftypes.UINT32, nil, base.HEX, 0x2000, "Bogus")
+cache_d2h_data.header_poison = ProtoField.new   ("Poison", "opencxl.cache.d2h.data.poison", ftypes.UINT32, nil, base.HEX, 0x4000, "Poison")
+cache_d2h_data.header_bep = ProtoField.new   ("BEP", "opencxl.cache.d2h.data.bep", ftypes.UINT32, nil, base.HEX, 0x8000, "Byte-Enables Present")
+cache_d2h_data.header_rsvd = ProtoField.new   ("Reserved", "opencxl.cache.d2h.data.rsvd", ftypes.UINT32, nil, base.HEX, 0x00FF0000, "Reserved")
+cache_d2h_data.data = ProtoField.new   ("Data (Hex)", "opencxl.cache.d2h.data.data", ftypes.BYTES, nil, base.SPACE, nil, "Data")
+
+-- cache_h2d_req header
+local cache_header_h2d_req_opcode_readable = {
+    [tonumber("001", 2)] = "SnpData",
+    [tonumber("010", 2)] = "SnpInv",
+    [tonumber("011", 2)] = "SnpCur",
+}
+
+local cache_h2d_req = {}
+cache_h2d_req.header_valid = ProtoField.new   ("Valid", "opencxl.cache.h2d.req.valid", ftypes.UINT8, nil, base.HEX, 0x1, "Packet Valid?")
+cache_h2d_req.header_opcode = ProtoField.new   ("Opcode", "opencxl.cache.h2d.req.cache_opcode", ftypes.UINT8, cache_header_h2d_req_opcode_readable, base.HEX, 0xE, "Cache Opcode")
+cache_h2d_req.header_addr = ProtoField.new   ("Address >> 6", "opencxl.cache.h2d.req.addr", ftypes.UINT64, nil, base.HEX, UInt64(0xFFFFFFF0, 0x0003FFFF), "Address >> 6")
+cache_h2d_req.header_uqid = ProtoField.new   ("UQID", "opencxl.cache.h2d.req.uqid", ftypes.UINT16, nil, base.HEX, 0x3FFC, "Unique Queue ID")
+cache_h2d_req.header_cache_id = ProtoField.new   ("Cache ID", "opencxl.cache.h2d.req.cache_id", ftypes.UINT8, nil, base.HEX, 0x3C, "Logical Cache ID of Dest")
+cache_h2d_req.header_rsvd = ProtoField.new   ("Rsvd", "opencxl.cache.h2d.req.rsvd", ftypes.UINT8, nil, base.HEX, 0xFC, "Reserved")
+
+-- cache_h2d_rsp header
+local cache_header_h2d_rsp_opcode_readable = {
+    [tonumber("0001", 2)] = "WritePull",
+    [tonumber("0100", 2)] = "GO",
+    [tonumber("0101", 2)] = "GO_WritePull",
+    [tonumber("0110", 2)] = "ExtCmp",
+    [tonumber("1000", 2)] = "GO_WritePull_Drop",
+    [tonumber("1100", 2)] = "Reserved",
+    [tonumber("1101", 2)] = "Fast_GO_WritePull",
+    [tonumber("1111", 2)] = "GO_ERR_WritePull",
+}
+
+local cache_header_h2d_rsp_pre_readable = {
+    [tonumber("00", 2)] = "Host Cache Miss to Local CPU socket memory",
+    [tonumber("01", 2)] = "Host Cache Hit",
+    [tonumber("10", 2)] = "Host Cache Miss to Remote CPU socket memory",
+    [tonumber("11", 2)] = "Reserved",
+}
+
+local cache_h2d_rsp = {}
+cache_h2d_rsp.header_valid = ProtoField.new   ("Valid", "opencxl.cache.h2d.rsp.valid", ftypes.UINT32, nil, base.HEX, 0x1, "Packet Valid?")
+cache_h2d_rsp.header_opcode = ProtoField.new   ("Opcode", "opencxl.cache.h2d.rsp.cache_opcode", ftypes.UINT32, cache_header_h2d_rsp_opcode_readable, base.HEX, 0x1E, "Cache Opcode")
+cache_h2d_rsp.header_rsp_data = ProtoField.new   ("RspData", "opencxl.cache.h2d.rsp.rsp_data", ftypes.UINT32, nil, base.HEX, 0x1FFE0, "Can be UQID or MESI")
+cache_h2d_rsp.header_rsp_pre = ProtoField.new   ("RSP_PRE", "opencxl.cache.h2d.rsp.rsp_pre", ftypes.UINT32, cache_header_h2d_rsp_pre_readable, base.HEX, 0x60000, "Performance Monitoring Information")
+cache_h2d_rsp.header_cqid = ProtoField.new   ("CQID", "opencxl.cache.h2d.rsp.cqid", ftypes.UINT32, nil, base.HEX, 0x7FF80000, "Command Queue ID")
+cache_h2d_rsp.header_cache_id = ProtoField.new   ("CacheID", "opencxl.cache.h2d.rsp.cqid", ftypes.UINT16, nil, base.HEX, 0x780, "Logical Cache ID")
+cache_h2d_rsp.header_rsvd = ProtoField.new   ("Rsvd", "opencxl.cache.h2d.rsp.rsvd", ftypes.UINT16, nil, base.HEX, 0xF800, "Rsvd")
+
+-- cache_h2d_data header
+local cache_h2d_data = {}
+cache_h2d_data.header_valid = ProtoField.new   ("Valid", "opencxl.cache.h2d.data.valid", ftypes.UINT32, nil, base.HEX, 0x1, "Packet Valid?")
+cache_h2d_data.header_cqid = ProtoField.new   ("CQID", "opencxl.cache.h2d.data.cqid", ftypes.UINT32, nil, base.HEX, 0x1FFE, "Command Queue ID")
+cache_h2d_data.header_poison = ProtoField.new   ("Poison", "opencxl.cache.h2d.data.poison", ftypes.UINT32, nil, base.HEX, 0x2000, "Poison")
+cache_h2d_data.header_go_err = ProtoField.new   ("GO-Err", "opencxl.cache.h2d.data.go_err", ftypes.UINT32, nil, base.HEX, 0x4000, "GO-Err")
+cache_h2d_data.header_cache_id = ProtoField.new   ("Cache ID", "opencxl.cache.h2d.data.cache_id", ftypes.UINT32, nil, base.HEX, 0x78000, "Cache ID")
+cache_h2d_data.header_rsvd = ProtoField.new   ("Rsvd", "opencxl.cache.h2d.data.rsvd", ftypes.UINT32, nil, base.HEX, 0x00F80000, "Reserved")
+cache_h2d_data.data = ProtoField.new   ("Data (Hex)", "opencxl.cache.h2d.data.data", ftypes.BYTES, nil, base.SPACE, nil, "Data")
+
+
 -- mem header
 local mem_header_channel_type_readable = {
     [1] = "M2S_REQ",
@@ -303,7 +441,7 @@ local mem_s2m_bisnp_header_valid = ProtoField.new   ("Valid", "opencxl.mem.s2m.b
 local mem_s2m_bisnp_header_mem_opcode = ProtoField.new   ("Opcode", "opencxl.mem.s2m.bisnp.mem_opcode", ftypes.UINT32, mem_header_s2m_bisnp_opcode_readable, base.HEX, 0x1E, "Opcode")
 local mem_s2m_bisnp_header_bi_id = ProtoField.new   ("BI ID", "opencxl.mem.s2m.bisnp.bi_id", ftypes.UINT32, nil, base.HEX, 0x1FFE0, "BI ID")
 local mem_s2m_bisnp_header_bi_tag = ProtoField.new   ("BI Tag", "opencxl.mem.s2m.bisnp.bi_tag", ftypes.UINT32, nil, base.HEX, 0x1FFE0000, "BI Tag")
-local mem_s2m_bisnp_header_addr = ProtoField.new   ("Address << 6", "opencxl.mem.s2m.bisnp.addr", ftypes.UINT64, nil, base.HEX, UInt64(0xFFFFFFFE, 0x00007FFF), "Address")
+local mem_s2m_bisnp_header_addr = ProtoField.new   ("Address >> 6", "opencxl.mem.s2m.bisnp.addr", ftypes.UINT64, nil, base.HEX, UInt64(0xFFFFFFFE, 0x00007FFF), "Address")
 local mem_s2m_bisnp_header_rsvd = ProtoField.new   ("Reserved", "opencxl.mem.s2m.bisnp.rsvd", ftypes.UINT16, nil, base.HEX, 0xFF8, "Reserved")
 
 
@@ -355,7 +493,8 @@ local mem_s2m_drs_data = ProtoField.new   ("Data (Hex)", "opencxl.mem.s2m.drs.da
 -- this actually registers the ProtoFields above, into our new Protocol
 -- in a real script I wouldn't do it this way; I'd build a table of fields programmatically
 -- and then set opencxl.fields to it, so as to avoid forgetting a field
-opencxl.fields = { sys_header_payload_type, sys_header_payload_len, io_header_fmt_type, io_header_th, io_header_rsvd, io_header_attr_b2, io_header_t8, io_header_tc, io_header_t9, io_header_length_upper, io_header_at, io_header_attr, io_header_ep, io_header_td, io_header_length_lower, io_mreq_header_req_id, io_mreq_header_tag, io_mreq_header_first_dw_be, io_mreq_header_last_dw_be, io_mreq_header_addr_upper, io_mreq_header_rsvd, io_mreq_header_addr_lower, io_cpl_header_cpl_id, io_cpl_header_byte_upper, io_cpl_header_bcm, io_cpl_header_status, io_cpl_header_byte_lower, io_cpl_header_req_id, io_cpl_header_tag, io_cpl_lower_addr, io_cpl_rsvd, io_cpl_data_32b, io_cpl_data_64b, io_cfg_header_req_id, io_cfg_header_tag, io_cfg_header_first_dw_be, io_cfg_header_last_dw_be, io_cfg_header_dest_id, io_cfg_header_ext_reg_num, io_cfg_header_rsvd, io_cfg_header_r, io_cfg_header_reg_num, io_cfg_header_data, mem_header_req_id, mem_header_channel_t, mem_m2s_req_header_valid, mem_m2s_req_header_mem_opcode, mem_m2s_req_header_snp_type, mem_m2s_req_header_meta_field, mem_m2s_req_header_meta_value, mem_m2s_req_header_tag, mem_m2s_req_header_addr, mem_m2s_req_header_ld_id, mem_m2s_req_header_rsvd, mem_m2s_req_header_tc, mem_m2s_req_header_padding, mem_m2s_rwd_header_valid, mem_m2s_rwd_header_mem_opcode, mem_m2s_rwd_header_snp_type, mem_m2s_rwd_header_meta_field, mem_m2s_rwd_header_meta_value, mem_m2s_rwd_header_tag, mem_m2s_rwd_header_addr, mem_m2s_rwd_header_poison, mem_m2s_rwd_header_bep, mem_m2s_rwd_header_ld_id, mem_m2s_rwd_header_ck_id, mem_m2s_rwd_header_rsvd, mem_m2s_rwd_header_tc, mem_m2s_rwd_data, mem_m2s_birsp_header_valid, mem_m2s_birsp_header_mem_opcode, mem_m2s_birsp_header_bi_id, mem_m2s_birsp_header_bi_tag, mem_m2s_birsp_header_low_addr, mem_m2s_birsp_header_rsvd, mem_s2m_bisnp_header_valid, mem_s2m_bisnp_header_mem_opcode, mem_s2m_bisnp_header_bi_id, mem_s2m_bisnp_header_bi_tag, mem_s2m_bisnp_header_addr, mem_s2m_bisnp_rsvd, mem_s2m_bisnp_header_rsvd, mem_s2m_ndr_header_valid, mem_s2m_ndr_header_mem_opcode, mem_s2m_ndr_header_meta_field, mem_s2m_ndr_header_meta_value, mem_s2m_ndr_header_tag, mem_s2m_ndr_ld_id, mem_s2m_ndr_dev_load, mem_s2m_ndr_rsvd, mem_s2m_drs_header_valid, mem_s2m_drs_header_mem_opcode, mem_s2m_drs_header_meta_field, mem_s2m_drs_header_meta_value, mem_s2m_drs_header_tag, mem_s2m_drs_poison, mem_s2m_drs_ld_id, mem_s2m_drs_dev_load, mem_s2m_drs_trp, mem_s2m_drs_rsvd, mem_s2m_drs_data }
+opencxl.fields = { sys_header_payload_type, sys_header_payload_len, io_header_fmt_type, io_header_th, io_header_rsvd, io_header_attr_b2, io_header_t8, io_header_tc, io_header_t9, io_header_length_upper, io_header_at, io_header_attr, io_header_ep, io_header_td, io_header_length_lower, io_mreq_header_req_id, io_mreq_header_tag, io_mreq_header_first_dw_be, io_mreq_header_last_dw_be, io_mreq_header_addr_upper, io_mreq_header_rsvd, io_mreq_header_addr_lower, io_cpl_header_cpl_id, io_cpl_header_byte_upper, io_cpl_header_bcm, io_cpl_header_status, io_cpl_header_byte_lower, io_cpl_header_req_id, io_cpl_header_tag, io_cpl_lower_addr, io_cpl_rsvd, io_cpl_data_32b, io_cpl_data_64b, io_cfg_header_req_id, io_cfg_header_tag, io_cfg_header_first_dw_be, io_cfg_header_last_dw_be, io_cfg_header_dest_id, io_cfg_header_ext_reg_num, io_cfg_header_rsvd, io_cfg_header_r, io_cfg_header_reg_num, io_cfg_header_data, cache_header_req_id, cache_header_channel_t, cache_d2h_req.header_valid, cache_d2h_req.header_cache_opcode, cache_d2h_req.header_cqid, cache_d2h_req.header_nt, cache_d2h_req.header_cache_id, cache_d2h_req.header_addr, cache_d2h_req.header_rsvd, cache_d2h_rsp.header_valid, cache_d2h_rsp.header_cache_opcode, cache_d2h_rsp.header_cqid, cache_d2h_rsp.header_rsvd, cache_d2h_data.header_valid, cache_d2h_data.header_uqid, cache_d2h_data.header_bogus, cache_d2h_data.header_poison, cache_d2h_data.header_bep, cache_d2h_data.header_rsvd, cache_d2h_data.data, 
+cache_h2d_req.header_valid, cache_h2d_req.header_opcode, cache_h2d_req.header_addr, cache_h2d_req.header_uqid, cache_h2d_req.header_cache_id, cache_h2d_req.header_rsvd, cache_h2d_rsp.header_valid, cache_h2d_rsp.header_opcode, cache_h2d_rsp.header_rsp_data, cache_h2d_rsp.header_rsp_pre, cache_h2d_rsp.header_cqid, cache_h2d_rsp.header_cache_id, cache_h2d_rsp.header_rsvd, cache_h2d_data.header_valid, cache_h2d_data.header_cqid, cache_h2d_data.header_poison, cache_h2d_data.header_go_err, cache_h2d_data.header_cache_id, cache_h2d_data.header_rsvd, cache_h2d_data.data, mem_header_req_id, mem_header_channel_t, mem_m2s_req_header_valid, mem_m2s_req_header_mem_opcode, mem_m2s_req_header_snp_type, mem_m2s_req_header_meta_field, mem_m2s_req_header_meta_value, mem_m2s_req_header_tag, mem_m2s_req_header_addr, mem_m2s_req_header_ld_id, mem_m2s_req_header_rsvd, mem_m2s_req_header_tc, mem_m2s_req_header_padding, mem_m2s_rwd_header_valid, mem_m2s_rwd_header_mem_opcode, mem_m2s_rwd_header_snp_type, mem_m2s_rwd_header_meta_field, mem_m2s_rwd_header_meta_value, mem_m2s_rwd_header_tag, mem_m2s_rwd_header_addr, mem_m2s_rwd_header_poison, mem_m2s_rwd_header_bep, mem_m2s_rwd_header_ld_id, mem_m2s_rwd_header_ck_id, mem_m2s_rwd_header_rsvd, mem_m2s_rwd_header_tc, mem_m2s_rwd_data, mem_m2s_birsp_header_valid, mem_m2s_birsp_header_mem_opcode, mem_m2s_birsp_header_bi_id, mem_m2s_birsp_header_bi_tag, mem_m2s_birsp_header_low_addr, mem_m2s_birsp_header_rsvd, mem_s2m_bisnp_header_valid, mem_s2m_bisnp_header_mem_opcode, mem_s2m_bisnp_header_bi_id, mem_s2m_bisnp_header_bi_tag, mem_s2m_bisnp_header_addr, mem_s2m_bisnp_rsvd, mem_s2m_bisnp_header_rsvd, mem_s2m_ndr_header_valid, mem_s2m_ndr_header_mem_opcode, mem_s2m_ndr_header_meta_field, mem_s2m_ndr_header_meta_value, mem_s2m_ndr_header_tag, mem_s2m_ndr_ld_id, mem_s2m_ndr_dev_load, mem_s2m_ndr_rsvd, mem_s2m_drs_header_valid, mem_s2m_drs_header_mem_opcode, mem_s2m_drs_header_meta_field, mem_s2m_drs_header_meta_value, mem_s2m_drs_header_tag, mem_s2m_drs_poison, mem_s2m_drs_ld_id, mem_s2m_drs_dev_load, mem_s2m_drs_trp, mem_s2m_drs_rsvd, mem_s2m_drs_data }
 
 
 local ef_too_short = ProtoExpert.new("opencxl.too_short.expert", "OpenCXL message too short",
@@ -383,6 +522,14 @@ local io_mreq_header_addr_upper_field      = Field.new("opencxl.io.mreq.addr_upp
 local io_mreq_header_addr_lower_field     = Field.new("opencxl.io.mreq.addr_lower")
 local io_cpl_header_addr_upper_field      = Field.new("opencxl.io.cpl.byte_upper")
 local io_cpl_header_addr_lower_field     = Field.new("opencxl.io.cpl.byte_lower")
+local cache_header_channel_t_field     = Field.new("opencxl.cache.channel_t")
+local cache_d2h_req_header_opcode_field     = Field.new("opencxl.cache.d2h.req.cache_opcode")
+local cache_d2h_req_header_nt_field     = Field.new("opencxl.cache.d2h.req.nt")
+local cache_d2h_req_header_addr_field   = Field.new("opencxl.cache.d2h.req.addr")
+local cache_d2h_rsp_header_opcode_field     = Field.new("opencxl.cache.d2h.rsp.cache_opcode")
+local cache_h2d_req_header_opcode_field     = Field.new("opencxl.cache.h2d.req.cache_opcode")
+local cache_h2d_req_header_addr_field   = Field.new("opencxl.cache.h2d.req.addr")
+local cache_h2d_rsp_header_opcode_field     = Field.new("opencxl.cache.h2d.rsp.cache_opcode")
 local mem_header_channel_t_field     = Field.new("opencxl.mem.channel_t")
 local mem_m2s_req_header_opcode_field     = Field.new("opencxl.mem.m2s.req.mem_opcode")
 local mem_m2s_req_header_addr_field   = Field.new("opencxl.mem.m2s.req.addr")
@@ -482,6 +629,26 @@ end
 
 function get_cxl_io_type(val)
     return io_header_payload_type_readable[val]
+end
+
+function get_cxl_cache_type(val)
+    return cache_header_channel_type_readable[val]
+end
+
+function get_cxl_cache_d2h_req_opcode_type(val)
+    return cache_header_d2h_req_opcode_readable[val]
+end
+
+function get_cxl_cache_d2h_rsp_opcode_type(val)
+    return cache_header_d2h_rsp_opcode_readable[val]
+end
+
+function get_cxl_cache_h2d_req_opcode_type(val)
+    return cache_header_h2d_req_opcode_readable[val]
+end
+
+function get_cxl_cache_h2d_rsp_opcode_type(val)
+    return cache_header_h2d_rsp_opcode_readable[val]
 end
 
 function get_cxl_mem_type(val)
@@ -636,6 +803,68 @@ function opencxl.dissector(tvbuf,pktinfo,root)
             if string.sub(get_cxl_io_type(io_header_fmt_type_field()()), 1, 6) == "CFG_WR" then
                 io_cfg_header_tree:add_le(io_cfg_header_data, tvbuf:range(14,4))
             end
+        end
+    elseif get_cxl_header_type(payload_type_field()()) == "CXL.cache" then
+        local cache_header_tree = tree:add(opencxl_cache_header, tvbuf:range(2,2))
+        cache_header_tree:add_le(cache_header_req_id, tvbuf:range(2,1))
+        cache_header_tree:add_le(cache_header_channel_t, tvbuf:range(3,1))
+        pktinfo.cols.info:append(get_cxl_cache_type(cache_header_channel_t_field()()))
+        if get_cxl_cache_type(cache_header_channel_t_field()()) == "D2H_REQ" then
+            local d2h_req_header_tree = tree:add(opencxl_d2h_req_header, tvbuf:range(4,9))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_valid, tvbuf:range(4,1))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_cache_opcode, tvbuf:range(4,1))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_cqid, tvbuf:range(4,3))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_nt, tvbuf:range(7,1))            
+            d2h_req_header_tree:add_le(cache_d2h_req.header_cache_id, tvbuf:range(7,2))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_addr, tvbuf:range(7,6))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_rsvd, tvbuf:range(12,1))
+            d2h_req_header_tree:append_text(", Type: " .. get_cxl_cache_d2h_req_opcode_type(cache_d2h_req_header_opcode_field()()) .. string.format(", Address: 0x%016x", (int(cache_d2h_req_header_addr_field) << 6)))
+        elseif get_cxl_cache_type(cache_header_channel_t_field()()) == "D2H_RSP" then
+            local d2h_rsp_header_tree = tree:add(opencxl_d2h_rsp_header, tvbuf:range(4,3))
+            d2h_rsp_header_tree:add_le(cache_d2h_rsp.header_valid, tvbuf:range(4,3))
+            d2h_rsp_header_tree:add_le(cache_d2h_rsp.header_cache_opcode, tvbuf:range(4,3))
+            d2h_rsp_header_tree:add_le(cache_d2h_rsp.header_cqid, tvbuf:range(4,3))
+            d2h_rsp_header_tree:add_le(cache_d2h_rsp.header_rsvd, tvbuf:range(4,3))
+            d2h_rsp_header_tree:append_text(", Type: " .. get_cxl_cache_d2h_rsp_opcode_type(cache_d2h_rsp_header_opcode_field()()))
+        elseif get_cxl_cache_type(cache_header_channel_t_field()()) == "D2H_DATA" then
+            local d2h_data_header_tree = tree:add(opencxl_d2h_data_header, tvbuf:range(4,3))
+            d2h_data_header_tree:add_le(cache_d2h_data.header_valid, tvbuf:range(4,3))
+            d2h_data_header_tree:add_le(cache_d2h_data.header_uqid, tvbuf:range(4,3))
+            d2h_data_header_tree:add_le(cache_d2h_data.header_bogus, tvbuf:range(4,3))
+            d2h_data_header_tree:add_le(cache_d2h_data.header_poison, tvbuf:range(4,3))
+            d2h_data_header_tree:add_le(cache_d2h_data.header_bep, tvbuf:range(4,3))
+            d2h_data_header_tree:add_le(cache_d2h_data.header_rsvd, tvbuf:range(4,3))
+            d2h_data_header_tree:add_le(cache_d2h_data.data, tvbuf:range(7,64))
+        elseif get_cxl_cache_type(cache_header_channel_t_field()()) == "H2D_REQ" then
+            local h2d_req_header_tree = tree:add(opencxl_h2d_req_header, tvbuf:range(4,9))
+            h2d_req_header_tree:add_le(cache_h2d_req.header_valid, tvbuf:range(4,1))
+            h2d_req_header_tree:add_le(cache_h2d_req.header_opcode, tvbuf:range(4,1))
+            h2d_req_header_tree:add_le(cache_h2d_req.header_addr, tvbuf:range(4,7))
+            h2d_req_header_tree:add_le(cache_h2d_req.header_uqid, tvbuf:range(10,2))
+            h2d_req_header_tree:add_le(cache_h2d_req.header_cache_id, tvbuf:range(11,1))
+            h2d_req_header_tree:add_le(cache_h2d_req.header_rsvd, tvbuf:range(12,1))
+            h2d_req_header_tree:append_text(", Type: " .. get_cxl_cache_h2d_req_opcode_type(cache_h2d_req_header_opcode_field()()) .. string.format(", Address: 0x%016x", (int(cache_h2d_req_header_addr_field) << 6)))
+        elseif get_cxl_cache_type(cache_header_channel_t_field()()) == "H2D_RSP" then
+            local h2d_rsp_header_tree = tree:add(opencxl_h2d_rsp_header, tvbuf:range(4,5))
+            h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_valid, tvbuf:range(4,4))
+            h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_opcode, tvbuf:range(4,4))
+            -- TODO: Parse if rsp_data is MESI (Table 3-20) or UQID (see Table 3-18)
+            h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_rsp_data, tvbuf:range(4,4))
+            h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_rsp_pre, tvbuf:range(4,4))
+            h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_cqid, tvbuf:range(4,4))
+            h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_cache_id, tvbuf:range(7,2))
+            h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_rsvd, tvbuf:range(7,2))
+            h2d_rsp_header_tree:append_text(", Type: " .. get_cxl_cache_h2d_rsp_opcode_type(cache_h2d_rsp_header_opcode_field()()))
+        elseif get_cxl_cache_type(cache_header_channel_t_field()()) == "H2D_DATA" then
+            local h2d_data_header_tree = tree:add(opencxl_h2d_data_header, tvbuf:range(4,3))
+            -- Rsvd should be 9 bits but OpenCXL implemented 5 bits only
+            h2d_data_header_tree:add_le(cache_h2d_data.header_valid, tvbuf:range(4,3))
+            h2d_data_header_tree:add_le(cache_h2d_data.header_cqid, tvbuf:range(4,3))
+            h2d_data_header_tree:add_le(cache_h2d_data.header_poison, tvbuf:range(4,3))
+            h2d_data_header_tree:add_le(cache_h2d_data.header_go_err, tvbuf:range(4,3))
+            h2d_data_header_tree:add_le(cache_h2d_data.header_cache_id, tvbuf:range(4,3))
+            h2d_data_header_tree:add_le(cache_h2d_data.header_rsvd, tvbuf:range(4,3))
+            h2d_data_header_tree:add_le(cache_h2d_data.data, tvbuf:range(7,64))
         end
     elseif get_cxl_header_type(payload_type_field()()) == "CXL.mem" then
         local mem_header_tree = tree:add(opencxl_mem_header, tvbuf:range(2,2))
