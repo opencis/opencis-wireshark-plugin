@@ -32,4 +32,3 @@ The complete filter definitions can be found in the dissector source code.
 ## Known limitations
 
  - Heuristic dissection is not implemented yet.
- - CXL.cache packet details are not implemented yet.
