@@ -320,6 +320,14 @@ local cache_header_h2d_rsp_opcode_readable = {
     [tonumber("1111", 2)] = "GO_ERR_WritePull",
 }
 
+local cache_header_h2d_mesi_readable = {
+    [tonumber("0011", 2)] = "Invalid",
+    [tonumber("0001", 2)] = "Shared",
+    [tonumber("0010", 2)] = "Exclusive",
+    [tonumber("0110", 2)] = "Modified",
+    [tonumber("0100", 2)] = "Error",
+}
+
 local cache_header_h2d_rsp_pre_readable = {
     [tonumber("00", 2)] = "Host Cache Miss to Local CPU socket memory",
     [tonumber("01", 2)] = "Host Cache Hit",
@@ -330,11 +338,14 @@ local cache_header_h2d_rsp_pre_readable = {
 local cache_h2d_rsp = {}
 cache_h2d_rsp.header_valid = ProtoField.new   ("Valid", "opencxl.cache.h2d.rsp.valid", ftypes.UINT32, nil, base.HEX, 0x1, "Packet Valid?")
 cache_h2d_rsp.header_opcode = ProtoField.new   ("Opcode", "opencxl.cache.h2d.rsp.cache_opcode", ftypes.UINT32, cache_header_h2d_rsp_opcode_readable, base.HEX, 0x1E, "Cache Opcode")
-cache_h2d_rsp.header_rsp_data = ProtoField.new   ("RspData", "opencxl.cache.h2d.rsp.rsp_data", ftypes.UINT32, nil, base.HEX, 0x1FFE0, "Can be UQID or MESI")
+cache_h2d_rsp.header_uqid = ProtoField.new   ("UQID", "opencxl.cache.h2d.rsp.rsp_data", ftypes.UINT32, nil, base.HEX, 0x1FFE0, "Unique Queue ID")
+cache_h2d_rsp.header_mesi = ProtoField.new   ("MESI", "opencxl.cache.h2d.rsp.rsp_data", ftypes.UINT32, cache_header_h2d_mesi_readable, base.HEX, 0x1E0, "MESI")
+cache_h2d_rsp.header_mesi_rsvd = ProtoField.new   ("Reserved", "opencxl.cache.h2d.rsp.rsp_data_rsvd", ftypes.UINT32, nil, base.HEX, 0x1FE00, "Reserved")
+cache_h2d_rsp.header_rsp_data = ProtoField.new   ("Reserved", "opencxl.cache.h2d.rsp.rsp_data", ftypes.UINT32, nil, base.HEX, 0x1FFE0, "Don't Care")
 cache_h2d_rsp.header_rsp_pre = ProtoField.new   ("RSP_PRE", "opencxl.cache.h2d.rsp.rsp_pre", ftypes.UINT32, cache_header_h2d_rsp_pre_readable, base.HEX, 0x60000, "Performance Monitoring Information")
 cache_h2d_rsp.header_cqid = ProtoField.new   ("CQID", "opencxl.cache.h2d.rsp.cqid", ftypes.UINT32, nil, base.HEX, 0x7FF80000, "Command Queue ID")
 cache_h2d_rsp.header_cache_id = ProtoField.new   ("CacheID", "opencxl.cache.h2d.rsp.cqid", ftypes.UINT16, nil, base.HEX, 0x780, "Logical Cache ID")
-cache_h2d_rsp.header_rsvd = ProtoField.new   ("Rsvd", "opencxl.cache.h2d.rsp.rsvd", ftypes.UINT16, nil, base.HEX, 0xF800, "Rsvd")
+cache_h2d_rsp.header_rsvd = ProtoField.new   ("Reserved", "opencxl.cache.h2d.rsp.rsvd", ftypes.UINT16, nil, base.HEX, 0xF800, "Reserved")
 
 -- cache_h2d_data header
 local cache_h2d_data = {}
@@ -343,7 +354,7 @@ cache_h2d_data.header_cqid = ProtoField.new   ("CQID", "opencxl.cache.h2d.data.c
 cache_h2d_data.header_poison = ProtoField.new   ("Poison", "opencxl.cache.h2d.data.poison", ftypes.UINT32, nil, base.HEX, 0x2000, "Poison")
 cache_h2d_data.header_go_err = ProtoField.new   ("GO-Err", "opencxl.cache.h2d.data.go_err", ftypes.UINT32, nil, base.HEX, 0x4000, "GO-Err")
 cache_h2d_data.header_cache_id = ProtoField.new   ("Cache ID", "opencxl.cache.h2d.data.cache_id", ftypes.UINT32, nil, base.HEX, 0x78000, "Cache ID")
-cache_h2d_data.header_rsvd = ProtoField.new   ("Rsvd", "opencxl.cache.h2d.data.rsvd", ftypes.UINT32, nil, base.HEX, 0x00F80000, "Reserved")
+cache_h2d_data.header_rsvd = ProtoField.new   ("Reserved", "opencxl.cache.h2d.data.rsvd", ftypes.UINT32, nil, base.HEX, 0x00F80000, "Reserved")
 cache_h2d_data.data = ProtoField.new   ("Data (Hex)", "opencxl.cache.h2d.data.data", ftypes.BYTES, nil, base.SPACE, nil, "Data")
 
 
@@ -494,7 +505,7 @@ local mem_s2m_drs_data = ProtoField.new   ("Data (Hex)", "opencxl.mem.s2m.drs.da
 -- in a real script I wouldn't do it this way; I'd build a table of fields programmatically
 -- and then set opencxl.fields to it, so as to avoid forgetting a field
 opencxl.fields = { sys_header_payload_type, sys_header_payload_len, io_header_fmt_type, io_header_th, io_header_rsvd, io_header_attr_b2, io_header_t8, io_header_tc, io_header_t9, io_header_length_upper, io_header_at, io_header_attr, io_header_ep, io_header_td, io_header_length_lower, io_mreq_header_req_id, io_mreq_header_tag, io_mreq_header_first_dw_be, io_mreq_header_last_dw_be, io_mreq_header_addr_upper, io_mreq_header_rsvd, io_mreq_header_addr_lower, io_cpl_header_cpl_id, io_cpl_header_byte_upper, io_cpl_header_bcm, io_cpl_header_status, io_cpl_header_byte_lower, io_cpl_header_req_id, io_cpl_header_tag, io_cpl_lower_addr, io_cpl_rsvd, io_cpl_data_32b, io_cpl_data_64b, io_cfg_header_req_id, io_cfg_header_tag, io_cfg_header_first_dw_be, io_cfg_header_last_dw_be, io_cfg_header_dest_id, io_cfg_header_ext_reg_num, io_cfg_header_rsvd, io_cfg_header_r, io_cfg_header_reg_num, io_cfg_header_data, cache_header_req_id, cache_header_channel_t, cache_d2h_req.header_valid, cache_d2h_req.header_cache_opcode, cache_d2h_req.header_cqid, cache_d2h_req.header_nt, cache_d2h_req.header_cache_id, cache_d2h_req.header_addr, cache_d2h_req.header_rsvd, cache_d2h_rsp.header_valid, cache_d2h_rsp.header_cache_opcode, cache_d2h_rsp.header_cqid, cache_d2h_rsp.header_rsvd, cache_d2h_data.header_valid, cache_d2h_data.header_uqid, cache_d2h_data.header_bogus, cache_d2h_data.header_poison, cache_d2h_data.header_bep, cache_d2h_data.header_rsvd, cache_d2h_data.data, 
-cache_h2d_req.header_valid, cache_h2d_req.header_opcode, cache_h2d_req.header_addr, cache_h2d_req.header_uqid, cache_h2d_req.header_cache_id, cache_h2d_req.header_rsvd, cache_h2d_rsp.header_valid, cache_h2d_rsp.header_opcode, cache_h2d_rsp.header_rsp_data, cache_h2d_rsp.header_rsp_pre, cache_h2d_rsp.header_cqid, cache_h2d_rsp.header_cache_id, cache_h2d_rsp.header_rsvd, cache_h2d_data.header_valid, cache_h2d_data.header_cqid, cache_h2d_data.header_poison, cache_h2d_data.header_go_err, cache_h2d_data.header_cache_id, cache_h2d_data.header_rsvd, cache_h2d_data.data, mem_header_req_id, mem_header_channel_t, mem_m2s_req_header_valid, mem_m2s_req_header_mem_opcode, mem_m2s_req_header_snp_type, mem_m2s_req_header_meta_field, mem_m2s_req_header_meta_value, mem_m2s_req_header_tag, mem_m2s_req_header_addr, mem_m2s_req_header_ld_id, mem_m2s_req_header_rsvd, mem_m2s_req_header_tc, mem_m2s_req_header_padding, mem_m2s_rwd_header_valid, mem_m2s_rwd_header_mem_opcode, mem_m2s_rwd_header_snp_type, mem_m2s_rwd_header_meta_field, mem_m2s_rwd_header_meta_value, mem_m2s_rwd_header_tag, mem_m2s_rwd_header_addr, mem_m2s_rwd_header_poison, mem_m2s_rwd_header_bep, mem_m2s_rwd_header_ld_id, mem_m2s_rwd_header_ck_id, mem_m2s_rwd_header_rsvd, mem_m2s_rwd_header_tc, mem_m2s_rwd_data, mem_m2s_birsp_header_valid, mem_m2s_birsp_header_mem_opcode, mem_m2s_birsp_header_bi_id, mem_m2s_birsp_header_bi_tag, mem_m2s_birsp_header_low_addr, mem_m2s_birsp_header_rsvd, mem_s2m_bisnp_header_valid, mem_s2m_bisnp_header_mem_opcode, mem_s2m_bisnp_header_bi_id, mem_s2m_bisnp_header_bi_tag, mem_s2m_bisnp_header_addr, mem_s2m_bisnp_rsvd, mem_s2m_bisnp_header_rsvd, mem_s2m_ndr_header_valid, mem_s2m_ndr_header_mem_opcode, mem_s2m_ndr_header_meta_field, mem_s2m_ndr_header_meta_value, mem_s2m_ndr_header_tag, mem_s2m_ndr_ld_id, mem_s2m_ndr_dev_load, mem_s2m_ndr_rsvd, mem_s2m_drs_header_valid, mem_s2m_drs_header_mem_opcode, mem_s2m_drs_header_meta_field, mem_s2m_drs_header_meta_value, mem_s2m_drs_header_tag, mem_s2m_drs_poison, mem_s2m_drs_ld_id, mem_s2m_drs_dev_load, mem_s2m_drs_trp, mem_s2m_drs_rsvd, mem_s2m_drs_data }
+cache_h2d_req.header_valid, cache_h2d_req.header_opcode, cache_h2d_req.header_addr, cache_h2d_req.header_uqid, cache_h2d_req.header_cache_id, cache_h2d_req.header_rsvd, cache_h2d_rsp.header_valid, cache_h2d_rsp.header_opcode, cache_h2d_rsp.header_uqid, cache_h2d_rsp.header_mesi, cache_h2d_rsp.header_mesi_rsvd, cache_h2d_rsp.header_rsp_data, cache_h2d_rsp.header_rsp_pre, cache_h2d_rsp.header_cqid, cache_h2d_rsp.header_cache_id, cache_h2d_rsp.header_rsvd, cache_h2d_data.header_valid, cache_h2d_data.header_cqid, cache_h2d_data.header_poison, cache_h2d_data.header_go_err, cache_h2d_data.header_cache_id, cache_h2d_data.header_rsvd, cache_h2d_data.data, mem_header_req_id, mem_header_channel_t, mem_m2s_req_header_valid, mem_m2s_req_header_mem_opcode, mem_m2s_req_header_snp_type, mem_m2s_req_header_meta_field, mem_m2s_req_header_meta_value, mem_m2s_req_header_tag, mem_m2s_req_header_addr, mem_m2s_req_header_ld_id, mem_m2s_req_header_rsvd, mem_m2s_req_header_tc, mem_m2s_req_header_padding, mem_m2s_rwd_header_valid, mem_m2s_rwd_header_mem_opcode, mem_m2s_rwd_header_snp_type, mem_m2s_rwd_header_meta_field, mem_m2s_rwd_header_meta_value, mem_m2s_rwd_header_tag, mem_m2s_rwd_header_addr, mem_m2s_rwd_header_poison, mem_m2s_rwd_header_bep, mem_m2s_rwd_header_ld_id, mem_m2s_rwd_header_ck_id, mem_m2s_rwd_header_rsvd, mem_m2s_rwd_header_tc, mem_m2s_rwd_data, mem_m2s_birsp_header_valid, mem_m2s_birsp_header_mem_opcode, mem_m2s_birsp_header_bi_id, mem_m2s_birsp_header_bi_tag, mem_m2s_birsp_header_low_addr, mem_m2s_birsp_header_rsvd, mem_s2m_bisnp_header_valid, mem_s2m_bisnp_header_mem_opcode, mem_s2m_bisnp_header_bi_id, mem_s2m_bisnp_header_bi_tag, mem_s2m_bisnp_header_addr, mem_s2m_bisnp_rsvd, mem_s2m_bisnp_header_rsvd, mem_s2m_ndr_header_valid, mem_s2m_ndr_header_mem_opcode, mem_s2m_ndr_header_meta_field, mem_s2m_ndr_header_meta_value, mem_s2m_ndr_header_tag, mem_s2m_ndr_ld_id, mem_s2m_ndr_dev_load, mem_s2m_ndr_rsvd, mem_s2m_drs_header_valid, mem_s2m_drs_header_mem_opcode, mem_s2m_drs_header_meta_field, mem_s2m_drs_header_meta_value, mem_s2m_drs_header_tag, mem_s2m_drs_poison, mem_s2m_drs_ld_id, mem_s2m_drs_dev_load, mem_s2m_drs_trp, mem_s2m_drs_rsvd, mem_s2m_drs_data }
 
 
 local ef_too_short = ProtoExpert.new("opencxl.too_short.expert", "OpenCXL message too short",
@@ -848,8 +859,17 @@ function opencxl.dissector(tvbuf,pktinfo,root)
             local h2d_rsp_header_tree = tree:add(opencxl_h2d_rsp_header, tvbuf:range(4,5))
             h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_valid, tvbuf:range(4,4))
             h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_opcode, tvbuf:range(4,4))
-            -- TODO: Parse if rsp_data is MESI (Table 3-20) or UQID (see Table 3-18)
-            h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_rsp_data, tvbuf:range(4,4))
+            -- Parse if rsp_data is MESI (Table 3-20) or UQID (see Table 3-18)
+            local rsp_header_opcode = get_cxl_cache_h2d_rsp_opcode_type(cache_h2d_rsp_header_opcode_field()())
+            if rsp_header_opcode == "GO" then
+                h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_mesi, tvbuf:range(4,4))
+                h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_mesi_rsvd, tvbuf:range(4,4))
+            elseif rsp_header_opcode == "ExtCmp" or rsp_header_opcode == "Reserved" then
+                h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_rsp_data, tvbuf:range(4,4))
+            else
+                h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_uqid, tvbuf:range(4,4))
+            end
+            
             h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_rsp_pre, tvbuf:range(4,4))
             h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_cqid, tvbuf:range(4,4))
             h2d_rsp_header_tree:add_le(cache_h2d_rsp.header_cache_id, tvbuf:range(7,2))
