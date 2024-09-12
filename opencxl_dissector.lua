@@ -256,11 +256,11 @@ local cache_header_d2h_req_nt_readable = {
 
 
 local cache_d2h_req = {}
-cache_d2h_req.header_valid = ProtoField.new   ("Valid", "opencxl.cache.d2h.req.valid", ftypes.UINT8, nil, base.HEX, 0x1, "Packet Valid?")
-cache_d2h_req.header_cache_opcode = ProtoField.new   ("Cache Opcode", "opencxl.cache.d2h.req.cache_opcode", ftypes.UINT8, cache_header_d2h_req_opcode_readable, base.HEX, 0x3E, "Opcode")
-cache_d2h_req.header_cqid = ProtoField.new   ("CQID", "opencxl.cache.d2h.req.cqid", ftypes.UINT32, nil, base.HEX, 0x3FFC0, "Command Queue ID")
-cache_d2h_req.header_nt = ProtoField.new   ("NT", "opencxl.cache.d2h.req.nt", ftypes.UINT8, cache_header_d2h_req_nt_readable, base.HEX, 0x4, "Non-temporal bit")
-cache_d2h_req.header_cache_id = ProtoField.new   ("CacheID", "opencxl.cache.d2h.req.cache_id", ftypes.UINT8, nil, base.HEX, 0x78, "Cache ID")
+cache_d2h_req.header_valid = ProtoField.new   ("Valid", "opencxl.cache.d2h.req.valid", ftypes.UINT32, nil, base.HEX, 0x00000001, "Packet Valid?")
+cache_d2h_req.header_cache_opcode = ProtoField.new   ("Cache Opcode", "opencxl.cache.d2h.req.cache_opcode", ftypes.UINT32, cache_header_d2h_req_opcode_readable, base.HEX, 0x0000003E, "Opcode")
+cache_d2h_req.header_cqid = ProtoField.new   ("CQID", "opencxl.cache.d2h.req.cqid", ftypes.UINT32, nil, base.HEX, 0x0003FFC0, "Command Queue ID")
+cache_d2h_req.header_nt = ProtoField.new   ("NT", "opencxl.cache.d2h.req.nt", ftypes.UINT32, cache_header_d2h_req_nt_readable, base.HEX, 0x00040000, "Non-temporal bit")
+cache_d2h_req.header_cache_id = ProtoField.new   ("CacheID", "opencxl.cache.d2h.req.cache_id", ftypes.UINT32, nil, base.HEX, 0x00780000, "Cache ID")
 cache_d2h_req.header_addr = ProtoField.new   ("Physical Address >> 6", "opencxl.cache.d2h.req.addr", ftypes.UINT64, nil, base.HEX, UInt64(0xFFFFFF80, 0x001FFFFF), "Physical Address >> 6")
 cache_d2h_req.header_rsvd = ProtoField.new   ("Reserved", "opencxl.cache.d2h.req.rsvd", ftypes.UINT8, nil, base.HEX, 0xFE, "Reserved")
 
@@ -811,12 +811,12 @@ function opencxl.dissector(tvbuf,pktinfo,root)
         pktinfo.cols.info:append(get_cxl_cache_type(cache_header_channel_t_field()()))
         if get_cxl_cache_type(cache_header_channel_t_field()()) == "D2H_REQ" then
             local d2h_req_header_tree = tree:add(opencxl_d2h_req_header, tvbuf:range(4,9))
-            d2h_req_header_tree:add_le(cache_d2h_req.header_valid, tvbuf:range(4,1))
-            d2h_req_header_tree:add_le(cache_d2h_req.header_cache_opcode, tvbuf:range(4,1))
-            d2h_req_header_tree:add_le(cache_d2h_req.header_cqid, tvbuf:range(4,3))
-            d2h_req_header_tree:add_le(cache_d2h_req.header_nt, tvbuf:range(7,1))            
-            d2h_req_header_tree:add_le(cache_d2h_req.header_cache_id, tvbuf:range(7,2))
-            d2h_req_header_tree:add_le(cache_d2h_req.header_addr, tvbuf:range(7,6))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_valid, tvbuf:range(4,4))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_cache_opcode, tvbuf:range(4,4))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_cqid, tvbuf:range(4,4))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_nt, tvbuf:range(4,4))            
+            d2h_req_header_tree:add_le(cache_d2h_req.header_cache_id, tvbuf:range(4,4))
+            d2h_req_header_tree:add_le(cache_d2h_req.header_addr, tvbuf:range(6,6))
             d2h_req_header_tree:add_le(cache_d2h_req.header_rsvd, tvbuf:range(12,1))
             d2h_req_header_tree:append_text(", Type: " .. get_cxl_cache_d2h_req_opcode_type(cache_d2h_req_header_opcode_field()()) .. string.format(", Address: 0x%016x", (int(cache_d2h_req_header_addr_field) << 6)))
         elseif get_cxl_cache_type(cache_header_channel_t_field()()) == "D2H_RSP" then
