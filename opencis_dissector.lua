@@ -168,19 +168,20 @@ local io_header_payload_type_readable = {
 
 
 -- io_header
-local io_header_fmt_type = ProtoField.new   ("Format Type", "opencis.io.fmt_type", ftypes.UINT32, io_header_payload_type_readable, base.HEX, 0xFF, "Format Type?")
-local io_header_th = ProtoField.new   ("th", "opencis.io.th", ftypes.UINT32, nil, base.HEX, 0x100, "Format Type?")
-local io_header_rsvd = ProtoField.new   ("rsvd", "opencis.io.rsvd", ftypes.UINT32, nil, base.HEX, 0x200, "Reserved")
-local io_header_attr_b2 = ProtoField.new   ("attr_b2", "opencis.io.attr_b2", ftypes.UINT32, nil, base.HEX, 0x400, "Attr b2")
-local io_header_t8 = ProtoField.new   ("t8", "opencis.io.t8", ftypes.UINT32, nil, base.HEX, 0x800, "t8")
-local io_header_tc = ProtoField.new   ("tc", "opencis.io.t8", ftypes.UINT32, nil, base.HEX, 0x7000, "tc")
-local io_header_t9 = ProtoField.new   ("t9", "opencis.io.t9", ftypes.UINT32, nil, base.HEX, 0x8000, "t9")
-local io_header_length_upper = ProtoField.new   ("Length Upper", "opencis.io.length_upper", ftypes.UINT32, nil, base.HEX, 0x30000, "Length, Upper Bits")
-local io_header_at = ProtoField.new   ("at", "opencis.io.at", ftypes.UINT32, nil, base.HEX, 0xC0000, "at")
-local io_header_attr = ProtoField.new   ("attr", "opencis.io.attr", ftypes.UINT32, nil, base.HEX, 0x300000, "attr")
-local io_header_ep = ProtoField.new   ("ep", "opencis.io.ep", ftypes.UINT32, nil, base.HEX, 0x400000, "ep")
-local io_header_td = ProtoField.new   ("td", "opencis.io.td", ftypes.UINT32, nil, base.HEX, 0x800000, "td")
-local io_header_length_lower = ProtoField.new   ("Length Lower", "opencis.io.length_lower", ftypes.UINT32, nil, base.HEX, 0xFF000000, "Length, Lower Bits")
+local io_header_tlp_header = ProtoField.new   ("TLP Header", "opencis.io.tlp",             ftypes.UINT64, nil,               base.HEX, 0xFFFFFFFF,           "TLP Header")
+local io_header_fmt_type   = ProtoField.new   ("Format Type", "opencis.io.fmt_type",        ftypes.UINT64, io_header_payload_type_readable, base.HEX, 0xFF00000000, "Format Type?")
+local io_header_th         = ProtoField.new   ("th",           "opencis.io.th",              ftypes.UINT64, nil,               base.HEX, 0x10000000000,      "Format Type?")
+local io_header_rsvd       = ProtoField.new   ("rsvd",         "opencis.io.rsvd",            ftypes.UINT64, nil,               base.HEX, 0x20000000000,      "Reserved")
+local io_header_attr_b2    = ProtoField.new   ("attr_b2",      "opencis.io.attr_b2",         ftypes.UINT64, nil,               base.HEX, 0x40000000000,      "Attr b2")
+local io_header_t8         = ProtoField.new   ("t8",           "opencis.io.t8",              ftypes.UINT64, nil,               base.HEX, 0x80000000000,      "t8")
+local io_header_tc         = ProtoField.new   ("tc",           "opencis.io.t8",              ftypes.UINT64, nil,               base.HEX, 0x700000000000,     "tc")
+local io_header_t9         = ProtoField.new   ("t9",           "opencis.io.t9",              ftypes.UINT64, nil,               base.HEX, 0x800000000000,     "t9")
+local io_header_length_upper = ProtoField.new ("Length Upper", "opencis.io.length_upper",    ftypes.UINT64, nil,               base.HEX, 0x3000000000000,    "Length, Upper Bits")
+local io_header_at         = ProtoField.new   ("at",           "opencis.io.at",              ftypes.UINT64, nil,               base.HEX, 0xC000000000000,    "at")
+local io_header_attr       = ProtoField.new   ("attr",         "opencis.io.attr",            ftypes.UINT64, nil,               base.HEX, 0x30000000000000,   "attr")
+local io_header_ep         = ProtoField.new   ("ep",           "opencis.io.ep",              ftypes.UINT64, nil,               base.HEX, 0x40000000000000,   "ep")
+local io_header_td         = ProtoField.new   ("td",           "opencis.io.td",              ftypes.UINT64, nil,               base.HEX, 0x80000000000000,   "td")
+local io_header_length_lower = ProtoField.new("Length Lower", "opencis.io.length_lower",    ftypes.UINT64, nil,               base.HEX, 0xFF00000000000000, "Length, Lower Bits")
 
 -- io_mreq_header
 local io_mreq_header_req_id = ProtoField.new   ("Request ID", "opencis.io.mreq.req_id", ftypes.UINT16, nil, base.HEX, nil, "Packet Request ID")
@@ -504,7 +505,7 @@ local mem_s2m_drs_data = ProtoField.new   ("Data (Hex)", "opencis.mem.s2m.drs.da
 -- this actually registers the ProtoFields above, into our new Protocol
 -- in a real script I wouldn't do it this way; I'd build a table of fields programmatically
 -- and then set opencis.fields to it, so as to avoid forgetting a field
-opencis.fields = { sys_header_payload_type, sys_header_payload_len, io_header_fmt_type, io_header_th, io_header_rsvd, io_header_attr_b2, io_header_t8, io_header_tc, io_header_t9, io_header_length_upper, io_header_at, io_header_attr, io_header_ep, io_header_td, io_header_length_lower, io_mreq_header_req_id, io_mreq_header_tag, io_mreq_header_first_dw_be, io_mreq_header_last_dw_be, io_mreq_header_addr_upper, io_mreq_header_rsvd, io_mreq_header_addr_lower, io_cpl_header_cpl_id, io_cpl_header_byte_upper, io_cpl_header_bcm, io_cpl_header_status, io_cpl_header_byte_lower, io_cpl_header_req_id, io_cpl_header_tag, io_cpl_lower_addr, io_cpl_rsvd, io_cpl_data_32b, io_cpl_data_64b, io_cfg_header_req_id, io_cfg_header_tag, io_cfg_header_first_dw_be, io_cfg_header_last_dw_be, io_cfg_header_dest_id, io_cfg_header_ext_reg_num, io_cfg_header_rsvd, io_cfg_header_r, io_cfg_header_reg_num, io_cfg_header_data, cache_header_req_id, cache_header_channel_t, cache_d2h_req.header_valid, cache_d2h_req.header_cache_opcode, cache_d2h_req.header_cqid, cache_d2h_req.header_nt, cache_d2h_req.header_cache_id, cache_d2h_req.header_addr, cache_d2h_req.header_rsvd, cache_d2h_rsp.header_valid, cache_d2h_rsp.header_cache_opcode, cache_d2h_rsp.header_cqid, cache_d2h_rsp.header_rsvd, cache_d2h_data.header_valid, cache_d2h_data.header_uqid, cache_d2h_data.header_bogus, cache_d2h_data.header_poison, cache_d2h_data.header_bep, cache_d2h_data.header_rsvd, cache_d2h_data.data, 
+opencis.fields = { sys_header_payload_type, sys_header_payload_len, io_header_tlp_header, io_header_fmt_type, io_header_th, io_header_rsvd, io_header_attr_b2, io_header_t8, io_header_tc, io_header_t9, io_header_length_upper, io_header_at, io_header_attr, io_header_ep, io_header_td, io_header_length_lower, io_mreq_header_req_id, io_mreq_header_tag, io_mreq_header_first_dw_be, io_mreq_header_last_dw_be, io_mreq_header_addr_upper, io_mreq_header_rsvd, io_mreq_header_addr_lower, io_cpl_header_cpl_id, io_cpl_header_byte_upper, io_cpl_header_bcm, io_cpl_header_status, io_cpl_header_byte_lower, io_cpl_header_req_id, io_cpl_header_tag, io_cpl_lower_addr, io_cpl_rsvd, io_cpl_data_32b, io_cpl_data_64b, io_cfg_header_req_id, io_cfg_header_tag, io_cfg_header_first_dw_be, io_cfg_header_last_dw_be, io_cfg_header_dest_id, io_cfg_header_ext_reg_num, io_cfg_header_rsvd, io_cfg_header_r, io_cfg_header_reg_num, io_cfg_header_data, cache_header_req_id, cache_header_channel_t, cache_d2h_req.header_valid, cache_d2h_req.header_cache_opcode, cache_d2h_req.header_cqid, cache_d2h_req.header_nt, cache_d2h_req.header_cache_id, cache_d2h_req.header_addr, cache_d2h_req.header_rsvd, cache_d2h_rsp.header_valid, cache_d2h_rsp.header_cache_opcode, cache_d2h_rsp.header_cqid, cache_d2h_rsp.header_rsvd, cache_d2h_data.header_valid, cache_d2h_data.header_uqid, cache_d2h_data.header_bogus, cache_d2h_data.header_poison, cache_d2h_data.header_bep, cache_d2h_data.header_rsvd, cache_d2h_data.data,
 cache_h2d_req.header_valid, cache_h2d_req.header_opcode, cache_h2d_req.header_addr, cache_h2d_req.header_uqid, cache_h2d_req.header_cache_id, cache_h2d_req.header_rsvd, cache_h2d_rsp.header_valid, cache_h2d_rsp.header_opcode, cache_h2d_rsp.header_uqid, cache_h2d_rsp.header_mesi, cache_h2d_rsp.header_mesi_rsvd, cache_h2d_rsp.header_rsp_data, cache_h2d_rsp.header_rsp_pre, cache_h2d_rsp.header_cqid, cache_h2d_rsp.header_cache_id, cache_h2d_rsp.header_rsvd, cache_h2d_data.header_valid, cache_h2d_data.header_cqid, cache_h2d_data.header_poison, cache_h2d_data.header_go_err, cache_h2d_data.header_cache_id, cache_h2d_data.header_rsvd, cache_h2d_data.data, mem_header_req_id, mem_header_channel_t, mem_m2s_req_header_valid, mem_m2s_req_header_mem_opcode, mem_m2s_req_header_snp_type, mem_m2s_req_header_meta_field, mem_m2s_req_header_meta_value, mem_m2s_req_header_tag, mem_m2s_req_header_addr, mem_m2s_req_header_ld_id, mem_m2s_req_header_rsvd, mem_m2s_req_header_tc, mem_m2s_req_header_padding, mem_m2s_rwd_header_valid, mem_m2s_rwd_header_mem_opcode, mem_m2s_rwd_header_snp_type, mem_m2s_rwd_header_meta_field, mem_m2s_rwd_header_meta_value, mem_m2s_rwd_header_tag, mem_m2s_rwd_header_addr, mem_m2s_rwd_header_poison, mem_m2s_rwd_header_bep, mem_m2s_rwd_header_ld_id, mem_m2s_rwd_header_ck_id, mem_m2s_rwd_header_rsvd, mem_m2s_rwd_header_tc, mem_m2s_rwd_data, mem_m2s_birsp_header_valid, mem_m2s_birsp_header_mem_opcode, mem_m2s_birsp_header_bi_id, mem_m2s_birsp_header_bi_tag, mem_m2s_birsp_header_low_addr, mem_m2s_birsp_header_rsvd, mem_s2m_bisnp_header_valid, mem_s2m_bisnp_header_mem_opcode, mem_s2m_bisnp_header_bi_id, mem_s2m_bisnp_header_bi_tag, mem_s2m_bisnp_header_addr, mem_s2m_bisnp_rsvd, mem_s2m_bisnp_header_rsvd, mem_s2m_ndr_header_valid, mem_s2m_ndr_header_mem_opcode, mem_s2m_ndr_header_meta_field, mem_s2m_ndr_header_meta_value, mem_s2m_ndr_header_tag, mem_s2m_ndr_ld_id, mem_s2m_ndr_dev_load, mem_s2m_ndr_rsvd, mem_s2m_drs_header_valid, mem_s2m_drs_header_mem_opcode, mem_s2m_drs_header_meta_field, mem_s2m_drs_header_meta_value, mem_s2m_drs_header_tag, mem_s2m_drs_poison, mem_s2m_drs_ld_id, mem_s2m_drs_dev_load, mem_s2m_drs_trp, mem_s2m_drs_rsvd, mem_s2m_drs_data }
 
 
@@ -742,77 +743,92 @@ function opencis.dissector(tvbuf,pktinfo,root)
     pktinfo.cols.info:set("Type: ".. get_cxl_header_type(payload_type_field()()) .. " ")
 
     if get_cxl_header_type(payload_type_field()()) == "CXL.io" then 
-        -- CXL.io cxl_io_header_t
-        local io_header_tree = tree:add(opencis_io_header, tvbuf:range(2,4))
-        io_header_tree:add_le(io_header_fmt_type, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_th, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_rsvd, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_attr_b2, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_t8, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_tc, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_t9, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_length_upper, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_at, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_attr, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_ep, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_td, tvbuf:range(2,4):le_uint())
-        io_header_tree:add_le(io_header_length_lower, tvbuf:range(2,4):le_uint())
 
-        local io_header_len = ((int(io_header_len_upper_field) << 8) + int(io_header_len_lower_field))
+        local r              = tvbuf:range(2,8)
+        local io_header_tree = tree:add(opencis_io_header, r)
+        local raw64 = r:le_uint64():tonumber()
 
-        io_header_tree:append_text(", Type: ".. get_cxl_io_type(io_header_fmt_type_field()()) .. ", Length (in DWORDs): " .. io_header_len)
-        pktinfo.cols.info:append( get_cxl_io_type(io_header_fmt_type_field()()) .. ", " .. io_header_len .. " DWORD" .. (io_header_len == 1 and "" or "s"))
+        -- for each field, capture both returns and print them
+        io_header_tree:add_le(io_header_tlp_header,    r)
+        io_header_tree:add_le(io_header_fmt_type,      r)
+        io_header_tree:add_le(io_header_th,            r)
+        io_header_tree:add_le(io_header_rsvd,          r)
+        io_header_tree:add_le(io_header_attr_b2,       r)
+        io_header_tree:add_le(io_header_t8,            r)
+        io_header_tree:add_le(io_header_tc,            r)
+        io_header_tree:add_le(io_header_t9,            r)
+        io_header_tree:add_le(io_header_length_upper,  r)
+        io_header_tree:add_le(io_header_at,            r)
+        io_header_tree:add_le(io_header_attr,          r)
+        io_header_tree:add_le(io_header_ep,            r)
+        io_header_tree:add_le(io_header_td,            r)
+        io_header_tree:add_le(io_header_length_lower,  r)
 
-        if get_cxl_io_type(io_header_fmt_type_field()()) == "MRD_32B" or get_cxl_io_type(io_header_fmt_type_field()()) == "MRD_64B" then
+        -- compute human-readable values
+        local fmt_type = (raw64 & 0xFF00000000) >> 32
+        local len_up   = (raw64 & 0x3000000000000) >> 44
+        local len_lo   = (raw64 & 0xFF00000000000000) >> 56
+        local io_len   = (len_up << 8) + len_lo
+
+        io_header_tree:append_text(
+        ", Type: " .. get_cxl_io_type(fmt_type) ..
+        ", Length (in DWORDs): " .. io_len
+        )
+        pktinfo.cols.info:append(
+        get_cxl_io_type(fmt_type) .. ", " .. io_len ..
+        " DWORD" .. (io_len==1 and "" or "s")
+        )
+
+        if get_cxl_io_type(fmt_type) == "MRD_32B" or get_cxl_io_type(fmt_type) == "MRD_64B" then
             -- mreq_header
-            local io_mreq_header_tree = tree:add(opencis_mreq_header, tvbuf:range(6,12))
-            io_mreq_header_tree:add_le(io_mreq_header_req_id, tvbuf:range(6,2))
-            io_mreq_header_tree:add_le(io_mreq_header_tag, tvbuf:range(8,1))
-            io_mreq_header_tree:add_le(io_mreq_header_first_dw_be, tvbuf:range(9,1))
-            io_mreq_header_tree:add_le(io_mreq_header_last_dw_be, tvbuf:range(9,1))
-            io_mreq_header_tree:add(io_mreq_header_addr_upper, tvbuf:range(10,8))
-            io_mreq_header_tree:add(io_mreq_header_addr_lower, tvbuf:range(10,8))
-            io_mreq_header_tree:add_le(io_mreq_header_rsvd, tvbuf:range(10,8))
+            local io_mreq_header_tree = tree:add(opencis_mreq_header, tvbuf:range(10,12))
+            io_mreq_header_tree:add_le(io_mreq_header_req_id, tvbuf:range(10,2))
+            io_mreq_header_tree:add_le(io_mreq_header_tag, tvbuf:range(12,1))
+            io_mreq_header_tree:add_le(io_mreq_header_first_dw_be, tvbuf:range(13,1))
+            io_mreq_header_tree:add_le(io_mreq_header_last_dw_be, tvbuf:range(13,1))
+            io_mreq_header_tree:add_le(io_mreq_header_addr_upper, tvbuf:range(14,8))
+            io_mreq_header_tree:add_le(io_mreq_header_addr_lower, tvbuf:range(14,8))
+            io_mreq_header_tree:add_le(io_mreq_header_rsvd, tvbuf:range(14,8))
 
             io_mreq_header_tree:append_text(string.format(", Address: 0x%016x", ((int(io_mreq_header_addr_upper_field) << 8) | (int(io_mreq_header_addr_lower_field) << 2))))
         end
 
-        if get_cxl_io_type(io_header_fmt_type_field()()) == "CPL_D" or get_cxl_io_type(io_header_fmt_type_field()()) == "CPL" then
-            local io_cpl_header_tree = tree:add(opencis_cpl_packet, tvbuf:range(6,8))
-            io_cpl_header_tree:add_le(io_cpl_header_cpl_id, tvbuf:range(6,2))
-            io_cpl_header_tree:add_le(io_cpl_header_byte_upper, tvbuf:range(8,1))
-            io_cpl_header_tree:add_le(io_cpl_header_bcm, tvbuf:range(8,1))
-            io_cpl_header_tree:add_le(io_cpl_header_status, tvbuf:range(8,1))
-            io_cpl_header_tree:add_le(io_cpl_header_byte_lower, tvbuf:range(9,1))
-            io_cpl_header_tree:add_le(io_cpl_header_req_id, tvbuf:range(10,2))
-            io_cpl_header_tree:add_le(io_cpl_header_tag, tvbuf:range(12,1))
-            io_cpl_header_tree:add_le(io_cpl_lower_addr, tvbuf:range(13,1))
-            io_cpl_header_tree:add_le(io_cpl_rsvd, tvbuf:range(13,1))
+        if get_cxl_io_type(fmt_type) == "CPL_D" or get_cxl_io_type(fmt_type) == "CPL" then
+            local io_cpl_header_tree = tree:add(opencis_cpl_packet, tvbuf:range(10,8))
+            io_cpl_header_tree:add_le(io_cpl_header_cpl_id, tvbuf:range(10,2))
+            io_cpl_header_tree:add_le(io_cpl_header_byte_upper, tvbuf:range(12,1))
+            io_cpl_header_tree:add_le(io_cpl_header_bcm, tvbuf:range(12,1))
+            io_cpl_header_tree:add_le(io_cpl_header_status, tvbuf:range(12,1))
+            io_cpl_header_tree:add_le(io_cpl_header_byte_lower, tvbuf:range(13,1))
+            io_cpl_header_tree:add_le(io_cpl_header_req_id, tvbuf:range(14,2))
+            io_cpl_header_tree:add_le(io_cpl_header_tag, tvbuf:range(16,1))
+            io_cpl_header_tree:add_le(io_cpl_lower_addr, tvbuf:range(17,1))
+            io_cpl_header_tree:add_le(io_cpl_rsvd, tvbuf:range(17,1))
 
             local total_bytes = (int(io_cpl_header_addr_upper_field) << 8) | int(io_cpl_header_addr_lower_field)
 
-            if get_cxl_io_type(io_header_fmt_type_field()()) == "CPL_D" then
+            if get_cxl_io_type(fmt_type) == "CPL_D" then
                 if total_bytes == 4 then
-                    io_cpl_header_tree:add_le(io_cpl_data_32b, tvbuf:range(14,4))
+                    io_cpl_header_tree:add_le(io_cpl_data_32b, tvbuf:range(18,4))
                 elseif total_bytes == 8 then
-                    io_cpl_header_tree:add_le(io_cpl_data_64b, tvbuf:range(14,8))
+                    io_cpl_header_tree:add_le(io_cpl_data_64b, tvbuf:range(18,8))
                 end
             end
         end
 
-        if string.sub(get_cxl_io_type(io_header_fmt_type_field()()), 1, 4) == "CFG_" then -- match CFG_WR and CFG_RD
-            local io_cfg_header_tree = tree:add(opencis_cfg_packet, tvbuf:range(6,8))
-            io_cfg_header_tree:add_le(io_cfg_header_req_id, tvbuf:range(6,2))
-            io_cfg_header_tree:add_le(io_cfg_header_tag, tvbuf:range(8,1))
-            io_cfg_header_tree:add_le(io_cfg_header_first_dw_be, tvbuf:range(9,1))
-            io_cfg_header_tree:add_le(io_cfg_header_last_dw_be, tvbuf:range(9,1))
-            io_cfg_header_tree:add_le(io_cfg_header_dest_id, tvbuf:range(10,2))
-            io_cfg_header_tree:add_le(io_cfg_header_ext_reg_num, tvbuf:range(12,1))
-            io_cfg_header_tree:add_le(io_cfg_header_rsvd, tvbuf:range(12,1))
-            io_cfg_header_tree:add_le(io_cfg_header_r, tvbuf:range(13,1))
-            io_cfg_header_tree:add_le(io_cfg_header_reg_num, tvbuf:range(13,1))
-            if string.sub(get_cxl_io_type(io_header_fmt_type_field()()), 1, 6) == "CFG_WR" then
-                io_cfg_header_tree:add_le(io_cfg_header_data, tvbuf:range(14,4))
+        if get_cxl_io_type(fmt_type) == "CFG_WR" or get_cxl_io_type(fmt_type) == "CFG_RD" then -- match CFG_WR and CFG_RD
+            local io_cfg_header_tree = tree:add(opencis_cfg_packet, tvbuf:range(10,8))
+            io_cfg_header_tree:add_le(io_cfg_header_req_id, tvbuf:range(10,2))
+            io_cfg_header_tree:add_le(io_cfg_header_tag, tvbuf:range(12,1))
+            io_cfg_header_tree:add_le(io_cfg_header_first_dw_be, tvbuf:range(13,1))
+            io_cfg_header_tree:add_le(io_cfg_header_last_dw_be, tvbuf:range(13,1))
+            io_cfg_header_tree:add_le(io_cfg_header_dest_id, tvbuf:range(14,2))
+            io_cfg_header_tree:add_le(io_cfg_header_ext_reg_num, tvbuf:range(16,1))
+            io_cfg_header_tree:add_le(io_cfg_header_rsvd, tvbuf:range(16,1))
+            io_cfg_header_tree:add_le(io_cfg_header_r, tvbuf:range(17,1))
+            io_cfg_header_tree:add_le(io_cfg_header_reg_num, tvbuf:range(17,1))
+            if get_cxl_io_type(fmt_type) == "CFG_WR" then
+                io_cfg_header_tree:add_le(io_cfg_header_data, tvbuf:range(18,4))
             end
         end
     elseif get_cxl_header_type(payload_type_field()()) == "CXL.cache" then
