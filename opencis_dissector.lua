@@ -345,7 +345,7 @@ cache_h2d_rsp.header_mesi_rsvd = ProtoField.new   ("Reserved", "opencis.cache.h2
 cache_h2d_rsp.header_rsp_data = ProtoField.new   ("Reserved", "opencis.cache.h2d.rsp.rsp_data", ftypes.UINT32, nil, base.HEX, 0x1FFE0, "Don't Care")
 cache_h2d_rsp.header_rsp_pre = ProtoField.new   ("RSP_PRE", "opencis.cache.h2d.rsp.rsp_pre", ftypes.UINT32, cache_header_h2d_rsp_pre_readable, base.HEX, 0x60000, "Performance Monitoring Information")
 cache_h2d_rsp.header_cqid = ProtoField.new   ("CQID", "opencis.cache.h2d.rsp.cqid", ftypes.UINT32, nil, base.HEX, 0x7FF80000, "Command Queue ID")
-cache_h2d_rsp.header_cache_id = ProtoField.new   ("CacheID", "opencis.cache.h2d.rsp.cqid", ftypes.UINT16, nil, base.HEX, 0x780, "Logical Cache ID")
+cache_h2d_rsp.header_cache_id = ProtoField.new   ("CacheID", "opencis.cache.h2d.rsp.cache_id", ftypes.UINT16, nil, base.HEX, 0x780, "Logical Cache ID")
 cache_h2d_rsp.header_rsvd = ProtoField.new   ("Reserved", "opencis.cache.h2d.rsp.rsvd", ftypes.UINT16, nil, base.HEX, 0xF800, "Reserved")
 
 -- cache_h2d_data header
