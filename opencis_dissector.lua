@@ -306,7 +306,7 @@ cache_h2d_req.header_valid = ProtoField.new   ("Valid", "opencis.cache.h2d.req.v
 cache_h2d_req.header_opcode = ProtoField.new   ("Opcode", "opencis.cache.h2d.req.cache_opcode", ftypes.UINT8, cache_header_h2d_req_opcode_readable, base.HEX, 0xE, "Cache Opcode")
 cache_h2d_req.header_addr = ProtoField.new   ("Address >> 6", "opencis.cache.h2d.req.addr", ftypes.UINT64, nil, base.HEX, UInt64(0xFFFFFFF0, 0x0003FFFF), "Address >> 6")
 cache_h2d_req.header_uqid = ProtoField.new   ("UQID", "opencis.cache.h2d.req.uqid", ftypes.UINT16, nil, base.HEX, 0x3FFC, "Unique Queue ID")
-cache_h2d_req.header_cache_id = ProtoField.new   ("Cache ID", "opencis.cache.h2d.req.cache_id", ftypes.UINT8, nil, base.HEX, 0x3C, "Logical Cache ID of Dest")
+cache_h2d_req.header_cache_id = ProtoField.new   ("Cache ID", "opencis.cache.h2d.req.cache_id", ftypes.UINT16, nil, base.HEX, 0x3C0, "Logical Cache ID of Dest")
 cache_h2d_req.header_rsvd = ProtoField.new   ("Rsvd", "opencis.cache.h2d.req.rsvd", ftypes.UINT8, nil, base.HEX, 0xFC, "Reserved")
 
 -- cache_h2d_rsp header
@@ -868,7 +868,7 @@ function opencis.dissector(tvbuf,pktinfo,root)
             h2d_req_header_tree:add_le(cache_h2d_req.header_opcode, tvbuf:range(4,1))
             h2d_req_header_tree:add_le(cache_h2d_req.header_addr, tvbuf:range(4,7))
             h2d_req_header_tree:add_le(cache_h2d_req.header_uqid, tvbuf:range(10,2))
-            h2d_req_header_tree:add_le(cache_h2d_req.header_cache_id, tvbuf:range(11,1))
+            h2d_req_header_tree:add_le(cache_h2d_req.header_cache_id, tvbuf:range(11,2))
             h2d_req_header_tree:add_le(cache_h2d_req.header_rsvd, tvbuf:range(12,1))
             h2d_req_header_tree:append_text(", Type: " .. get_cxl_cache_h2d_req_opcode_type(cache_h2d_req_header_opcode_field()()) .. string.format(", Address: 0x%016x", (int(cache_h2d_req_header_addr_field) << 6)))
         elseif get_cxl_cache_type(cache_header_channel_t_field()()) == "H2D_RSP" then
